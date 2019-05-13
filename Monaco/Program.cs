@@ -17,10 +17,11 @@ namespace Monaco
             #region Initialise
             ThreadPool.GetMaxThreads(out int workerThreads, out int completionPortThreads);
             ThreadPool.SetMinThreads(workerThreads, completionPortThreads);
+            Console.WriteLine(workerThreads + " " + completionPortThreads);
             LogVerbosity logVerbosity = LogVerbosity.Info;
             BinanceClient.SetDefaultOptions(new BinanceClientOptions()
             {
-                ApiCredentials = new ApiCredentials("xRG2dHStpuX4jdHUsVul8YlChhAzHs3ksUe68PvOuespRNWgXQa4eSgqBHd3co2k", "69ZXyVEufb1BvEoD3MzqCCIaPKZAwEbm6OrL3wSESbYGUAaHD8jC5H2tAatqojMu"),
+                ApiCredentials = new ApiCredentials("5u4hnBfBDY3nYCmPTWLSzQe7LIlhZePrTEG8QgaJwShO2LOG2miCuNTgporIdSaM", "ixpwvtzv1Ro7gi4aajuBduTREKBLc08MaNDGUw4OjWwwHw7A2E47GvjNWlzcjbb6"),
                 LogVerbosity = logVerbosity,
                 LogWriters = new List<TextWriter> { Console.Out },
                 TradeRulesBehaviour = TradeRulesBehaviour.AutoComply,
@@ -31,7 +32,7 @@ namespace Monaco
             });
             BinanceSocketClient.SetDefaultOptions(new BinanceSocketClientOptions()
             {
-                ApiCredentials = new ApiCredentials("xRG2dHStpuX4jdHUsVul8YlChhAzHs3ksUe68PvOuespRNWgXQa4eSgqBHd3co2k", "69ZXyVEufb1BvEoD3MzqCCIaPKZAwEbm6OrL3wSESbYGUAaHD8jC5H2tAatqojMu"),
+                ApiCredentials = new ApiCredentials("5u4hnBfBDY3nYCmPTWLSzQe7LIlhZePrTEG8QgaJwShO2LOG2miCuNTgporIdSaM", "ixpwvtzv1Ro7gi4aajuBduTREKBLc08MaNDGUw4OjWwwHw7A2E47GvjNWlzcjbb6"),
                 LogVerbosity = logVerbosity,
                 ReconnectInterval = TimeSpan.FromSeconds(0),
                 LogWriters = new List<TextWriter> { Console.Out }
@@ -49,8 +50,7 @@ namespace Monaco
 
             while (true)
             {
-                Thread.Sleep(1000);
-            }
+           }
         }
 
     }

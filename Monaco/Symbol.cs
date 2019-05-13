@@ -60,13 +60,13 @@ namespace Monaco
             {
                 Console.WriteLine($"{e}");
             }
-
             var symbolBalance = Program.account.accountInfo.Balances.FirstOrDefault(x => x.Asset == symbol.BaseAsset);
 
             /// Calls to logic go here
             /// 
             if (tradeData.Price != 0)
             {
+
                 // Check that price is in the bottom 20% of prices and that the high and low prices for the day are wider than 0.8%
                 var dailyLowPrice = fifteenMinutes.TakeLast(96).Min(x => x.Low);
                 var dailyHighPrice = fifteenMinutes.TakeLast(96).Max(x => x.High);
@@ -85,7 +85,9 @@ namespace Monaco
 
 
                 if (tradeData.Price < oneMinuteList[1].Low || oneMinuteList[1].Close < bottom50Percent)
+                {
                     return;
+                }
 
                 //Walls
                 var orderBook = _client.GetOrderBook(symbol.Name, 10).Data;
@@ -95,11 +97,12 @@ namespace Monaco
 
                 if (greenWallQty < (redWallQty * 2))
                     return;
+                var bitcoinBalance = Program.account.accountInfo.Balances.FirstOrDefault(x => x.Asset == "BTC");
+                var Quantity = (symbol.MinNotionalFilter.MinNotional * 1.5m / tradeData.Price);
 
-                if (symbolBalance.Free == 0)
+                if (symbolBalance.Free == 0 && bitcoinBalance.Free > Quantity * tradeData.Price)
                 {
-                    var Quantity = (symbol.MinNotionalFilter.MinNotional * 1.5m / tradeData.Price);
-                    var newBuyOrder = _client.PlaceTestOrder(symbol.Name, OrderSide.Buy, OrderType.Limit, Quantity, null, tradeData.Price, TimeInForce.GoodTillCancel);
+                    var newBuyOrder = _client.PlaceOrder(symbol.Name, OrderSide.Buy, OrderType.Limit, Quantity, null, tradeData.Price, TimeInForce.GoodTillCancel);
                     Console.WriteLine($"Bought {symbol.Name} at {DateTime.UtcNow} for {Math.Round(tradeData.Price, 7)}");
 
                 }
@@ -109,21 +112,24 @@ namespace Monaco
                 if (Program.account.orders.Any() && Program.account.orders.Any(x => x.Symbol == symbol.Name))
                 {
                     lastOrder = Program.account.orders.Last(x => x.Symbol == symbol.Name && x.Side == OrderSide.Buy && x.Status == OrderStatus.Filled);
-                    if (calculations.calculatePercentageChange(tradeData.Price, lastOrder.Price) > 0.4m)
+                    var percentChange = calculations.calculatePercentageChange(tradeData.Price, lastOrder.Price);
+                    if (percentChange > 0.4m)
                     {
-                        var OneMinuteList = oneMinute.TakeLast(3).ToList();
-                        if (OneMinuteList[0].Close < OneMinuteList[0].Open
-                            && OneMinuteList[0].Open < OneMinuteList[1].Open
-                            && OneMinuteList[1].Open < OneMinuteList[2].Open
-                            && calculations.calculatePercentageChange(OneMinuteList[2].Open, OneMinuteList[0].Close) < -0.02m
-                            || calculations.calculatePercentageChange(OneMinuteList[0].Open, OneMinuteList[0].Close) < -0.02m)
-                        {
-                            var result = _client.PlaceTestOrder(symbol.Name, OrderSide.Sell, OrderType.Limit, symbolBalance.Free, null, tradeData.Price, TimeInForce.GoodTillCancel);
-                        }
+                        //var OneMinuteList = oneMinute.TakeLast(3).ToList();
+                        //if (OneMinuteList[0].Close < OneMinuteList[0].Open
+                        //    && OneMinuteList[0].Open < OneMinuteList[1].Open
+                        //    && OneMinuteList[1].Open < OneMinuteList[2].Open
+                        //    && calculations.calculatePercentageChange(OneMinuteList[2].Open, OneMinuteList[0].Close) < -0.02m
+                        //    || calculations.calculatePercentageChange(OneMinuteList[0].Open, OneMinuteList[0].Close) < -0.02m)
+                        //{
+                            var result = _client.PlaceOrder(symbol.Name, OrderSide.Sell, OrderType.Limit, symbolBalance.Free, null, tradeData.Price, TimeInForce.GoodTillCancel);
+                        lastOrder = new BinanceStreamOrderUpdate();
+                        // }
                     }
                     if (lastOrder.Time <= DateTimeOffset.UtcNow.AddDays(-4))
                     {
-                        var result = _client.PlaceTestOrder(symbol.Name, OrderSide.Sell, OrderType.Limit, symbolBalance.Free, null, tradeData.Price, TimeInForce.GoodTillCancel);
+                        var result = _client.PlaceOrder(symbol.Name, OrderSide.Sell, OrderType.Limit, symbolBalance.Free, null, tradeData.Price, TimeInForce.GoodTillCancel);
+                        lastOrder = new BinanceStreamOrderUpdate();
                     }
                 }
             }
